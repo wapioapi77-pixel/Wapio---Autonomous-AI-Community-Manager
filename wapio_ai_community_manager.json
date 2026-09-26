@@ -94,7 +94,7 @@
       "id": "8b1872ff-4033-4022-aca7-ab9b0f33d867",
       "credentials": {
         "googlePalmApi": {
-          "id": "jIcD62uTb1m5bzmg",
+          "id": "",
           "name": "Google Gemini(PaLM) Api account"
         }
       }
@@ -118,9 +118,8 @@
         "operation": "sendText",
         "sessionId": {
           "__rl": true,
-          "value": "bps_sess_ws_1JbBK6QtQ-f_tSon7WVM9w",
-          "mode": "list",
-          "cachedResultName": "webhook-test (+1123456789) [connected]"
+          "value": "",
+          "mode": "list"
         },
         "to": "={{ $json.recipient }}",
         "text": "={{ $json.caption }}"
@@ -135,7 +134,7 @@
       "id": "8179a506-3986-4a41-b35f-1bf6343f49cc",
       "credentials": {
         "wapioApi": {
-          "id": "l9MazxwpUQT67sue",
+          "id": "",
           "name": "Wapio account"
         }
       }
@@ -178,9 +177,8 @@
         "operation": "sendPoll",
         "sessionId": {
           "__rl": true,
-          "value": "bps_sess_ws_1JbBK6QtQ-f_tSon7WVM9w",
-          "mode": "list",
-          "cachedResultName": "webhook-test (+1123456789) [connected]"
+          "value": "",
+          "mode": "list"
         },
         "to": "={{ $('🛡️ Sanitize WhatsApp Text & Poll').item.json.recipient }}",
         "pollQuestion": "={{ $('🛡️ Sanitize WhatsApp Text & Poll').item.json.poll.question }}",
@@ -197,7 +195,7 @@
       "name": "📊 Wapio - Send Interactive Poll",
       "credentials": {
         "wapioApi": {
-          "id": "l9MazxwpUQT67sue",
+          "id": "",
           "name": "Wapio account"
         }
       }
