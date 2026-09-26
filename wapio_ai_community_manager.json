@@ -1,0 +1,312 @@
+{
+  "name": "Wapio - Autonomous AI Community Manager (Native Polls)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 9
+            },
+            {
+              "field": "weeks",
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "name": "Schedule (Click to pick times & days)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "69b223ba-b85b-4dca-8882-cee1515968bf"
+    },
+    {
+      "parameters": {},
+      "name": "Manual Trigger (Test Now)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        192
+      ],
+      "id": "85215ad9-de68-4bef-930c-54885d8be45e"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    brandName: \"TECH PULSE\",\n    recipient: \"YOUR_GROUP_OR_CHANNEL_JID@g.us\",\n    niche: \"Modern Software Engineering, AI Coding Tools, and System Architecture\",\n    audience: \"Senior Developers, Tech Leads, Founders, and Systems Builders\",\n    persona: \"Opinionated Staff Engineer with 15 years in production. Pragmatic, allergic to corporate hype, values simplicity & rock-solid reliability, speaks like an authentic peer in a dev Discord.\",\n    contentArchetype: \"AUTO_ROTATE\",\n    contentDepth: \"DEEP_INSIGHT\",\n    priorityTopics: [\n      \"AI code generation vs architecture decay: why seniors spend 4x longer reviewing PRs\",\n      \"The $30,000 cloud bill horror story: serverless cold starts & API loops vs a $40 Hetzner VPS\",\n      \"Postgres is almost always enough: why teams regret adopting distributed databases too early\",\n      \"Local LLMs with Ollama/vLLM vs OpenAI cloud dependency in production systems\",\n      \"The microservices trap: how premature splitting kills team velocity\",\n      \"Dead code & dependency bloat: the hidden vulnerability nobody talks about\",\n      \"Async engineering culture vs the disease of back-to-back calendar meetings\"\n    ],\n    customRules: \"Avoid generic LinkedIn-style motivational fluff. No forced labels like 'The Real Story:' or 'Takeaway:'. Speak with technical authority, include specific tools/numbers/trade-offs, and make the debate feel like a lively team standup debate.\",\n    enablePolls: true,\n    pollMultiSelect: false\n  }\n}];"
+      },
+      "name": "⚙️ Community Bot Settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        80
+      ],
+      "id": "e66994f8-8d6c-4ba3-92b8-9d78572c2cad"
+    },
+    {
+      "parameters": {
+        "jsCode": "// =========================================================================\n// 🧠 DAY-OF-WEEK CADENCE & ANTI-REPETITION MEMORY ENGINE\n// =========================================================================\nconst staticData = $getWorkflowStaticData('global');\nstaticData.topicHistory = staticData.topicHistory || [];\n\nconst settings = $input.item.json;\nconst now = new Date();\nconst currentHour = now.getHours();\nconst currentDay = now.getDay(); // 0 = Sun, 1 = Mon, ..., 5 = Fri, 6 = Sat\n\n// 1. Daily Archetype System (keeps content varied & captivating every day)\nconst archetypeSchedule = {\n  1: { archetype: \"TACTICAL_PLAYBOOK\", focus: \"A high-leverage rule of thumb, architectural pattern, or code smell that saves hours in production.\" },\n  2: { archetype: \"ARCHITECTURE_TEARDOWN\", focus: \"Dissecting a core stack debate: e.g. Postgres vs specialized DBs, Monolith vs Microservices, SSR vs SPA.\" },\n  3: { archetype: \"PRODUCTION_WAR_STORY\", focus: \"A realistic production outage or tech debt horror story: what broke, why it broke, and the real fix.\" },\n  4: { archetype: \"HIDDEN_TRADEOFFS\", focus: \"Exposing the hidden costs of hype: serverless billing traps, premature abstractions, or over-engineered CI/CD.\" },\n  5: { archetype: \"POLARIZING_DEBATE\", focus: \"A spicy, contrarian engineering take that challenges common wisdom and forces members to pick a side.\" },\n  6: { archetype: \"FUTURE_HORIZONS\", focus: \"Local AI tooling, edge compute, or unconventional open-source tech worth watching.\" },\n  0: { archetype: \"DEEP_CRAFT_REFLECT\", focus: \"Software craftsmanship, avoiding burnout, and what separates 10x codebases from unmaintainable sludge.\" }\n};\n\nconst scheduled = archetypeSchedule[currentDay] || archetypeSchedule[1];\nconst selectedArchetype = (settings.contentArchetype && settings.contentArchetype !== \"AUTO_ROTATE\")\n  ? settings.contentArchetype\n  : scheduled.archetype;\n\n// 2. Slot Context: Morning Kickstart vs Evening Roundtable\nlet slotType, slotTheme, shouldIncludePoll;\nif (currentHour < 13) {\n  slotType = \"MORNING_BRIEF\";\n  slotTheme = `MORNING INTEL: High-signal briefing for engineers starting their day. Focus: ${scheduled.focus}`;\n  shouldIncludePoll = false;\n} else {\n  slotType = \"EVENING_ROUNDTABLE\";\n  slotTheme = `EVENING ROUNDTABLE: Relaxed, engaging end-of-day discussion for tech builders. Focus: ${scheduled.focus} Includes an interactive poll sparking peer debate.`;\n  shouldIncludePoll = settings.enablePolls !== false;\n}\n\n// 3. Sliding Memory (Anti-Repetition)\nconst recentTopics = staticData.topicHistory.slice(-30);\n\n// 4. Topic Inspiration Pool\nconst priorityList = Array.isArray(settings.priorityTopics) && settings.priorityTopics.length > 0\n  ? settings.priorityTopics.join(\"\\n- \")\n  : \"General high-signal engineering & systems design\";\n\nreturn [{\n  json: {\n    ...settings,\n    activeArchetype: selectedArchetype,\n    slotType,\n    slotTheme,\n    shouldIncludePoll,\n    priorityTopicList: priorityList,\n    recentTopicsList: recentTopics.length > 0 ? recentTopics.join(\"\\n- \") : \"None yet (First run)\"\n  }\n}];"
+      },
+      "name": "🧠 Memory & Day Cadence Engine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        80
+      ],
+      "id": "395db08b-06d4-48f2-8826-0f42cdeccc0d"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are {{ $json.persona }}.\n\nYou are writing an authentic, high-signal WhatsApp post for an exclusive group called \"*{{ $json.brandName }}*\".\n\nCONTEXT & AUDIENCE:\n- Group Audience: {{ $json.audience }}\n- Core Niche: {{ $json.niche }}\n- Slot: {{ $json.slotTheme }}\n- Selected Archetype: {{ $json.activeArchetype }}\n- Target Depth: {{ $json.contentDepth === 'DEEP_INSIGHT' ? '120-160 words with real technical substance and specifics' : '80-110 words, concise and punchy' }}\n\nPRIORITY TOPIC INSPIRATION:\n- {{ $json.priorityTopicList }}\n\nPREVIOUS TOPICS (DO NOT REPEAT OR OVERLAP WITH THESE):\n- {{ $json.recentTopicsList }}\n\nUSER'S SPECIAL GUIDANCE:\n{{ $json.customRules }}\n\n------------------------------------------------------------\nWHAT MAKES A POST BORING VS WHAT MAKES IT ENGAGING:\n- BORING: Generic platitudes, corporate bullet lists, labeling sections like \"🔷 The Real Story:\" or \"💡 Takeaway:\", stating obvious truisms like \"writing code is easy, maintenance is hard\".\n- ENGAGING: Concrete scenarios, specific stack choices (e.g. Postgres vs Mongo, Redis vs SQLite, Vite vs Webpack, Docker vs Serverless), actual numbers/costs ($30k bills, 800ms cold starts), contrarian realities, and genuine peer-to-peer developer banter.\n\nPOLL RULES (CRITICAL):\nIf a poll is generated, the options MUST NEVER be lazy generic answers like \"Yes / No / Maybe\" or \"Too early to tell\".\nInstead, each option must be a distinct, opinionated camp or real-world answer (2 to 4 options, under 30 characters each).\nExample:\nQuestion: \"Where does your team bleed the most time with AI-written code?\"\nOptions: [\"Reviewing messy junior PRs\", \"Hunting subtle hallucinations\", \"Context drift over time\", \"We don't review, we pray\"]\n------------------------------------------------------------\n\nOUTPUT FORMAT:\nReturn STRICT, RAW JSON ONLY. No markdown code blocks (no ```json), no intro text.\n\n{\n  \"topic\": \"<3-5 words summarizing this specific post's theme>\",\n  \"caption\": \"<The full WhatsApp post formatted according to the rules below>\",\n  \"poll\": {\n    \"question\": \"<A sharp, opinionated debate question, max 120 characters>\",\n    \"options\": [\"<Camp 1>\", \"<Camp 2>\", \"<Camp 3>\"],\n    \"multiSelect\": false\n  }\n}\n\nWHATSAPP CAPTION FORMATTING RULES:\n1. Top Header: *{{ $json.brandName }}* • {{ $json.slotType === 'MORNING_BRIEF' ? 'Morning Intel' : 'Evening Roundtable' }}\n2. Line 2: ━━━━━━━━━━━━━━━━━━\n3. Catchy, scroll-stopping headline in bold: *<Bold Headline with a sharp hook>*\n4. The Content (organic, engaging paragraph): Tell the story, tear down the trade-off, or share the real engineering insight. Use WhatsApp quotes (`> text`) for spicy takeaways, and monospace (\\`code\\`) for technical terms, commands, or architecture names.\n5. Closing Prompt: A natural 1-sentence prompt asking members for their opinion or asking them to cast their vote in the poll below. (NO rigid 'Debate:' label).",
+        "options": {}
+      },
+      "name": "🤖 Gemini Autonomous Editor",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        720,
+        80
+      ],
+      "id": "f374ec5d-c904-4933-91ca-e0f41c06336c"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {
+          "temperature": 0.85
+        }
+      },
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        672,
+        304
+      ],
+      "id": "8b1872ff-4033-4022-aca7-ab9b0f33d867",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jIcD62uTb1m5bzmg",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// =========================================================================\n// 🛡️ SANITIZE WHATSAPP POST & PERSISTENT MEMORY\n// =========================================================================\nconst staticData = $getWorkflowStaticData('global');\nstaticData.topicHistory = staticData.topicHistory || [];\n\nconst rawOutput = $input.item.json.output || $input.item.json.text || \"\";\nconst settings = $('⚙️ Community Bot Settings').item.json;\nconst memoryCtx = $('🧠 Memory & Day Cadence Engine').item.json;\n\nlet parsed;\ntry {\n  const cleaned = rawOutput.replace(/```json/gi, '').replace(/```/g, '').trim();\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  parsed = {\n    topic: \"Community Strategy Update\",\n    caption: rawOutput,\n    poll: null\n  };\n}\n\n// 1. WhatsApp Markdown Sanitizer\nlet caption = parsed.caption || rawOutput;\ncaption = caption\n  .replace(/\\*\\*(.*?)\\*\\*/g, '*$1*') // Convert **bold** to *bold*\n  .replace(/^#+\\s*/gm, '')           // Strip markdown # headers\n  .replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '$1: $2') // Convert [Link](url) to Link: url\n  .replace(/^>([^\\s])/gm, '> $1');   // Ensure WhatsApp quote bar has space after >\n\n// 2. Validate Poll Payload\nlet validPoll = null;\nif (settings.enablePolls && parsed.poll && parsed.poll.question && Array.isArray(parsed.poll.options) && parsed.poll.options.length >= 2) {\n  validPoll = {\n    question: String(parsed.poll.question).slice(0, 255),\n    options: parsed.poll.options.slice(0, 4).map(opt => String(opt).trim().slice(0, 80)),\n    multiSelect: settings.pollMultiSelect !== undefined ? Boolean(settings.pollMultiSelect) : Boolean(parsed.poll.multiSelect)\n  };\n}\n\n// 3. Save to Anti-Repetition Persistent Memory\nif (parsed.topic) {\n  staticData.topicHistory.push(parsed.topic);\n  if (staticData.topicHistory.length > 30) {\n    staticData.topicHistory.shift();\n  }\n}\n\nreturn [{\n  json: {\n    topic: parsed.topic,\n    caption: caption,\n    recipient: settings.recipient || \"YOUR_GROUP_OR_CHANNEL_JID@g.us\",\n    hasPoll: Boolean(validPoll),\n    poll: validPoll\n  }\n}];"
+      },
+      "name": "🛡️ Sanitize WhatsApp Text & Poll",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        80
+      ],
+      "id": "73905cec-e3b1-431b-9c15-902caa9c76dd"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendText",
+        "sessionId": {
+          "__rl": true,
+          "value": "bps_sess_ws_1JbBK6QtQ-f_tSon7WVM9w",
+          "mode": "list",
+          "cachedResultName": "webhook-test (+1123456789) [connected]"
+        },
+        "to": "={{ $json.recipient }}",
+        "text": "={{ $json.caption }}"
+      },
+      "name": "📲 Wapio - Send Text to WhatsApp",
+      "type": "n8n-nodes-wapio.wapio",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        80
+      ],
+      "id": "8179a506-3986-4a41-b35f-1bf6343f49cc",
+      "credentials": {
+        "wapioApi": {
+          "id": "l9MazxwpUQT67sue",
+          "name": "Wapio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "poll-check",
+              "leftValue": "={{ $('🛡️ Sanitize WhatsApp Text & Poll').item.json.hasPoll }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        80
+      ],
+      "id": "b6a713cb-569d-4721-a4b5-9db4324f62e8",
+      "name": "Has Interactive Poll?"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendPoll",
+        "sessionId": {
+          "__rl": true,
+          "value": "bps_sess_ws_1JbBK6QtQ-f_tSon7WVM9w",
+          "mode": "list",
+          "cachedResultName": "webhook-test (+1123456789) [connected]"
+        },
+        "to": "={{ $('🛡️ Sanitize WhatsApp Text & Poll').item.json.recipient }}",
+        "pollQuestion": "={{ $('🛡️ Sanitize WhatsApp Text & Poll').item.json.poll.question }}",
+        "pollOptions": "={{ $('🛡️ Sanitize WhatsApp Text & Poll').item.json.poll.options }}",
+        "pollMultiSelect": "={{ $('🛡️ Sanitize WhatsApp Text & Poll').item.json.poll.multiSelect }}"
+      },
+      "type": "n8n-nodes-wapio.wapio",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        60
+      ],
+      "id": "61e355e1-f13a-4e6c-b2c5-8cb8143fcc75",
+      "name": "📊 Wapio - Send Interactive Poll",
+      "credentials": {
+        "wapioApi": {
+          "id": "l9MazxwpUQT67sue",
+          "name": "Wapio account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule (Click to pick times & days)": {
+      "main": [
+        [
+          {
+            "node": "⚙️ Community Bot Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger (Test Now)": {
+      "main": [
+        [
+          {
+            "node": "⚙️ Community Bot Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚙️ Community Bot Settings": {
+      "main": [
+        [
+          {
+            "node": "🧠 Memory & Day Cadence Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧠 Memory & Day Cadence Engine": {
+      "main": [
+        [
+          {
+            "node": "🤖 Gemini Autonomous Editor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 Gemini Autonomous Editor": {
+      "main": [
+        [
+          {
+            "node": "🛡️ Sanitize WhatsApp Text & Poll",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "🤖 Gemini Autonomous Editor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🛡️ Sanitize WhatsApp Text & Poll": {
+      "main": [
+        [
+          {
+            "node": "📲 Wapio - Send Text to WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📲 Wapio - Send Text to WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Has Interactive Poll?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Interactive Poll?": {
+      "main": [
+        [
+          {
+            "node": "📊 Wapio - Send Interactive Poll",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d4c17f984fd9adf175b59d0e04aa2fca0479a455ad0448ee477945890ad9a633"
+  }
+}
